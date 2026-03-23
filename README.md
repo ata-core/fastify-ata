@@ -49,8 +49,9 @@ That's it. All your existing JSON Schema route definitions work as-is.
 
 | | ata-validator | ajv |
 |---|---|---|
+| Parallel batch (10K) | **12.5M items/sec (5.9x faster)** | 2.1M items/sec |
 | Schema compilation | **145x faster** | baseline |
-| Engine | simdjson + RE2 + codegen | JS |
+| Engine | simdjson + RE2 + multi-core | JS (single-thread) |
 | Spec compliance | 98.6% Draft 2020-12 | ~100% |
 | Standard Schema V1 | Yes | No |
 
