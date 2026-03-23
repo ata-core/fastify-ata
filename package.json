@@ -1,7 +1,7 @@
 {
   "name": "fastify-ata",
-  "version": "0.1.2",
-  "description": "Fastify plugin for ata-validator — JSON Schema validation powered by simdjson",
+  "version": "0.1.3",
+  "description": "Fastify plugin for ata-validator — 2.2x faster than ajv, multi-core parallel validation powered by simdjson",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/ata-core/fastify-ata#readme",
   "dependencies": {
-    "ata-validator": "^0.2.0",
+    "ata-validator": "^0.3.0",
     "fastify-plugin": "^5.1.0"
   },
   "peerDependencies": {
