@@ -2,7 +2,7 @@
 
 Fastify plugin for [ata-validator](https://ata-validator.com) — JSON Schema validation powered by simdjson.
 
-Replaces the default ajv validator compiler with ata-validator for **120x faster schema compilation**.
+Replaces the default ajv validator compiler with ata-validator for **145x faster schema compilation**.
 
 ## Install
 
@@ -49,7 +49,7 @@ That's it. All your existing JSON Schema route definitions work as-is.
 
 | | ata-validator | ajv |
 |---|---|---|
-| Schema compilation | **120x faster** | baseline |
+| Schema compilation | **145x faster** | baseline |
 | Engine | simdjson + RE2 + codegen | JS |
 | Spec compliance | 98.6% Draft 2020-12 | ~100% |
 | Standard Schema V1 | Yes | No |
