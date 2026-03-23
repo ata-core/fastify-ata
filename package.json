@@ -1,0 +1,38 @@
+{
+  "name": "fastify-ata",
+  "version": "0.1.0",
+  "description": "Fastify plugin for ata-validator — JSON Schema validation powered by simdjson",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ata-core/fastify-ata.git"
+  },
+  "keywords": [
+    "fastify",
+    "json-schema",
+    "validator",
+    "simdjson",
+    "ata-validator",
+    "standard-schema"
+  ],
+  "author": "Mert Can Altin <mertcanaltin01@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ata-core/fastify-ata/issues"
+  },
+  "homepage": "https://github.com/ata-core/fastify-ata#readme",
+  "dependencies": {
+    "ata-validator": "^0.2.0",
+    "fastify-plugin": "^5.1.0"
+  },
+  "peerDependencies": {
+    "fastify": ">=4.0.0"
+  },
+  "devDependencies": {
+    "fastify": "^5.8.4"
+  }
+}
