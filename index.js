@@ -5,11 +5,15 @@ const { Validator } = require('ata-validator')
 
 function fastifyAta(fastify, opts, done) {
   const cache = new WeakMap()
+  const validatorOpts = {
+    coerceTypes: opts.coerceTypes || false,
+    removeAdditional: opts.removeAdditional || false,
+  }
 
   fastify.setValidatorCompiler(({ schema }) => {
     let validator = cache.get(schema)
     if (!validator) {
-      validator = new Validator(schema)
+      validator = new Validator(schema, validatorOpts)
       cache.set(schema, validator)
     }
     return (data) => {
