@@ -1,6 +1,6 @@
 {
   "name": "fastify-ata",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Fastify plugin for ata-validator — beats ajv on every valid-path benchmark. 2.7x faster validate(obj), 151x faster compilation, simdjson + multi-core.",
   "main": "index.js",
   "types": "index.d.ts",
