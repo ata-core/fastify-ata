@@ -91,15 +91,16 @@ Works with Fastify v5's Standard Schema support, tRPC, TanStack Form, Drizzle OR
 | **Serverless cold start** (50 schemas) | 7.7ms | 96ms | **12.5x faster** |
 | **ReDoS protection** (catastrophic pattern) | 0.3ms | 765ms | **immune** |
 | **Batch NDJSON** (10K items, multi-core) | 13.4M/sec | 5.1M/sec | **2.6x faster** |
-| **validate(obj)** valid (micro) | 15M ops/sec | 8.5M ops/sec | **1.8x faster** |
-| **Schema compilation** | 125K ops/sec | 831 ops/sec | **151x faster** |
+| **validate(obj)** valid (isolated) | 76M ops/sec | 8M ops/sec | **9.5x faster** |
+| **validate(obj)** invalid (isolated) | 34M ops/sec | 8M ops/sec | **4.3x faster** |
+| **Schema compilation** | 113K ops/sec | 818 ops/sec | **138x faster** |
 
 ### Things only ata can do
 
 - **RE2 regex engine** — linear-time guaranteed, immune to ReDoS attacks
 - **Multi-core parallel validation** — NDJSON batch at 12.5M items/sec
 - **Standard Schema V1** — native support, ajv doesn't have it
-- **151x faster compilation** — serverless cold starts, dynamic schemas
+- **138x faster compilation** — serverless cold starts, dynamic schemas
 
 ## License
 
