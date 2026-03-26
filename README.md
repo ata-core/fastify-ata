@@ -49,6 +49,38 @@ fastify.register(fastifyAta, {
 })
 ```
 
+## Standalone Mode (Pre-compiled)
+
+Drop-in replacement for `@fastify/ajv-compiler/standalone`. Same API.
+
+```js
+const StandaloneValidator = require('fastify-ata/standalone')
+
+// Build phase (once) — compile schemas to JS files
+const app = fastify({
+  schemaController: { compilersFactory: {
+    buildValidator: StandaloneValidator({
+      readMode: false,
+      storeFunction(routeOpts, code) {
+        fs.writeFileSync(generateFileName(routeOpts), code)
+      }
+    })
+  }}
+})
+
+// Read phase (every startup) — load pre-compiled, 1.7x faster than ajv standalone
+const app = fastify({
+  schemaController: { compilersFactory: {
+    buildValidator: StandaloneValidator({
+      readMode: true,
+      restoreFunction(routeOpts) {
+        return require(generateFileName(routeOpts))
+      }
+    })
+  }}
+})
+```
+
 ## Standard Schema V1
 
 ata-validator natively implements [Standard Schema V1](https://github.com/standard-schema/standard-schema) — the emerging standard for TypeScript-first schema libraries.
@@ -91,8 +123,10 @@ Works with Fastify v5's Standard Schema support, tRPC, TanStack Form, Drizzle OR
 | **Serverless cold start** (50 schemas) | 7.7ms | 96ms | **12.5x faster** |
 | **ReDoS protection** (catastrophic pattern) | 0.3ms | 765ms | **immune** |
 | **Batch NDJSON** (10K items, multi-core) | 13.4M/sec | 5.1M/sec | **2.6x faster** |
-| **validate(obj)** valid (isolated) | 76M ops/sec | 8M ops/sec | **9.5x faster** |
-| **validate(obj)** invalid (isolated) | 34M ops/sec | 8M ops/sec | **4.3x faster** |
+| **validate(obj)** valid (isolated) | 68M ops/sec | 8M ops/sec | **8.5x faster** |
+| **validate(obj)** invalid (isolated) | 17M ops/sec | 8M ops/sec | **2.1x faster** |
+| **validateJSON(str)** valid | 3.0M ops/sec | 1.9M ops/sec | **1.6x faster** |
+| **Fastify startup** (500 routes) | 46ms | 77ms (standalone) | **1.7x faster** |
 | **Schema compilation** | 113K ops/sec | 818 ops/sec | **138x faster** |
 
 ### Things only ata can do
