@@ -1,6 +1,6 @@
 # fastify-ata
 
-Fastify plugin for [ata-validator](https://ata-validator.com) — JSON Schema validation powered by simdjson.
+Fastify plugin for [ata-validator](https://ata-validator.com) - JSON Schema validation powered by simdjson.
 
 Drop-in replacement for Fastify's default ajv validator. Standard Schema V1 compatible.
 
@@ -56,7 +56,7 @@ Drop-in replacement for `@fastify/ajv-compiler/standalone`. Same API.
 ```js
 const StandaloneValidator = require('fastify-ata/standalone')
 
-// Build phase (once) — compile schemas to JS files
+// Build phase (once) - compile schemas to JS files
 const app = fastify({
   schemaController: { compilersFactory: {
     buildValidator: StandaloneValidator({
@@ -68,7 +68,7 @@ const app = fastify({
   }}
 })
 
-// Read phase (every startup) — load pre-compiled, near-zero compile time
+// Read phase (every startup) - load pre-compiled, near-zero compile time
 const app = fastify({
   schemaController: { compilersFactory: {
     buildValidator: StandaloneValidator({
@@ -83,7 +83,7 @@ const app = fastify({
 
 ## Standard Schema V1
 
-ata-validator natively implements [Standard Schema V1](https://github.com/standard-schema/standard-schema) — the emerging standard for TypeScript-first schema libraries.
+ata-validator natively implements [Standard Schema V1](https://github.com/standard-schema/standard-schema) - the emerging standard for TypeScript-first schema libraries.
 
 ```js
 const { Validator } = require('ata-validator')
@@ -131,10 +131,10 @@ Works with Fastify v5's Standard Schema support, tRPC, TanStack Form, Drizzle OR
 
 ### Things only ata can do
 
-- **RE2 regex engine** — linear-time guaranteed, immune to ReDoS attacks
-- **Multi-core parallel validation** — NDJSON batch at 12.5M items/sec
-- **Standard Schema V1** — native support, ajv doesn't have it
-- **138x faster compilation** — serverless cold starts, dynamic schemas
+- **RE2 regex engine** - linear-time guaranteed, immune to ReDoS attacks
+- **Multi-core parallel validation** - NDJSON batch at 12.5M items/sec
+- **Standard Schema V1** - native support, ajv doesn't have it
+- **138x faster compilation** - serverless cold starts, dynamic schemas
 
 ## License
 
