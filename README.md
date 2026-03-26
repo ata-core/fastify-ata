@@ -68,7 +68,7 @@ const app = fastify({
   }}
 })
 
-// Read phase (every startup) — load pre-compiled, 1.7x faster than ajv standalone
+// Read phase (every startup) — load pre-compiled, near-zero compile time
 const app = fastify({
   schemaController: { compilersFactory: {
     buildValidator: StandaloneValidator({
