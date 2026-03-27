@@ -120,21 +120,24 @@ Works with Fastify v5's Standard Schema support, tRPC, TanStack Form, Drizzle OR
 
 | Scenario | ata | ajv | |
 |---|---|---|---|
-| **Serverless cold start** (50 schemas) | 7.7ms | 96ms | **12.5x faster** |
+| **Constructor cold start** | 1.25M ops/sec | 873 ops/sec | **1,432x faster** |
+| **Serverless cold start** (50 schemas) | 0.1ms | 23ms | **242x faster** |
+| **First validation** (construct + validate) | 15.7K ops/sec | 855 ops/sec | **18x faster** |
 | **ReDoS protection** (catastrophic pattern) | 0.3ms | 765ms | **immune** |
 | **Batch NDJSON** (10K items, multi-core) | 13.4M/sec | 5.1M/sec | **2.6x faster** |
-| **validate(obj)** valid (isolated) | 68M ops/sec | 8M ops/sec | **8.5x faster** |
-| **validate(obj)** invalid (isolated) | 17M ops/sec | 8M ops/sec | **2.1x faster** |
-| **validateJSON(str)** valid | 3.0M ops/sec | 1.9M ops/sec | **1.6x faster** |
-| **Fastify startup** (500 routes) | 46ms | 77ms (standalone) | **1.7x faster** |
-| **Schema compilation** | 113K ops/sec | 818 ops/sec | **138x faster** |
+| **validate(obj)** valid (isolated) | 14.6M ops/sec | 8.3M ops/sec | **1.8x faster** |
+| **validate(obj)** invalid (isolated) | 12.9M ops/sec | 8.0M ops/sec | **1.6x faster** |
+| **validateJSON(str)** valid | 2.1M ops/sec | 1.9M ops/sec | **1.1x faster** |
+| **Fastify startup** (5 routes) | 0.5ms | 6.0ms | **12x faster** |
+| **Schema compilation** | 136K ops/sec | 794 ops/sec | **171x faster** |
 
 ### Things only ata can do
 
 - **RE2 regex engine** - linear-time guaranteed, immune to ReDoS attacks
 - **Multi-core parallel validation** - NDJSON batch at 12.5M items/sec
 - **Standard Schema V1** - native support, ajv doesn't have it
-- **138x faster compilation** - serverless cold starts, dynamic schemas
+- **Lazy compilation** - near-zero constructor, 1,432x faster cold start
+- **171x faster compilation** - serverless cold starts, dynamic schemas
 
 ## License
 
