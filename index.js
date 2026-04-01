@@ -5,6 +5,7 @@ const { Validator } = require('ata-validator')
 
 function fastifyAta(fastify, opts, done) {
   const cache = new WeakMap()
+  const hasCoercion = !!(opts.coerceTypes || opts.removeAdditional)
   const validatorOpts = {
     coerceTypes: opts.coerceTypes || false,
     removeAdditional: opts.removeAdditional || false,
@@ -16,22 +17,16 @@ function fastifyAta(fastify, opts, done) {
       validator = new Validator(schema, validatorOpts)
       cache.set(schema, validator)
     }
-    return (data) => {
+    const validate = (data) => {
       const result = validator.validate(data)
       if (result.valid) {
-        return { value: data }
+        return hasCoercion ? { value: data } : true
       }
-      const err = new Error(result.errors.map(e => e.message).join(', '))
-      err.statusCode = 400
-      err.validation = result.errors.map(e => ({
-        message: e.message,
-        instancePath: e.path || '',
-        schemaPath: '',
-        keyword: '',
-        params: {},
-      }))
-      return { error: err }
+      validate.errors = result.errors
+      return false
     }
+    validate.errors = null
+    return validate
   })
 
   done()
