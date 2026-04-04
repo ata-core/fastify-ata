@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/ata-core/fastify-ata#readme",
   "dependencies": {
-    "ata-validator": "^0.6.0",
+    "ata-validator": "^0.7.3",
     "fastify-ata": "^0.2.16",
     "fastify-plugin": "^5.1.0",
     "sanitize-filename": "^1.6.4"
