@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/fastify-ata.svg" alt="fastify-ata" width="640" />
+</p>
+
 # fastify-ata
 
 Fastify plugin for [ata-validator](https://ata-validator.com) - JSON Schema validation powered by simdjson.
