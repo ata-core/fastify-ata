@@ -9,6 +9,7 @@ function fastifyAta(fastify, opts, done) {
   const validatorOpts = {
     coerceTypes: opts.coerceTypes || false,
     removeAdditional: opts.removeAdditional || false,
+    abortEarly: opts.abortEarly || false,
   }
 
   fastify.setValidatorCompiler(({ schema }) => {

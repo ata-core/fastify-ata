@@ -1,7 +1,7 @@
 {
   "name": "fastify-ata",
-  "version": "0.2.23",
-  "description": "Fastify plugin for ata-validator — beats ajv on every valid-path benchmark. 2.7x faster validate(obj), 151x faster compilation, simdjson + multi-core.",
+  "version": "0.3.0",
+  "description": "Fastify plugin for ata-validator. Runtime-competitive with the default, 24x faster serverless cold start, Standard Schema V1.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -19,7 +19,7 @@
     "ata-validator",
     "standard-schema"
   ],
-  "author": "Mert Can Altin <mertcanaltin01@gmail.com>",
+  "author": "Mert Can Altin <mertgold60@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ata-core/fastify-ata/issues"
@@ -27,7 +27,6 @@
   "homepage": "https://github.com/ata-core/fastify-ata#readme",
   "dependencies": {
     "ata-validator": "^0.11.0",
-    "fastify-ata": "^0.2.21",
     "fastify-plugin": "^5.1.0",
     "sanitize-filename": "^1.6.4"
   },

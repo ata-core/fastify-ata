@@ -1,14 +1,16 @@
 import { FastifyPluginCallback } from 'fastify'
 
 interface FastifyAtaOptions {
+  /** Convert "42" -> 42 for integer fields, etc. */
   coerceTypes?: boolean
+  /** Strip properties that are not declared in the schema. */
   removeAdditional?: boolean
   /**
-   * Enable turbo mode: overrides the JSON content-type parser to receive
-   * the raw Buffer and uses simdjson-backed validateJSON for validation
-   * instead of V8's JSON.parse path. Incompatible with coerceTypes.
+   * Skip detailed error collection on validation failure. Returns a shared
+   * stub error object instead. Useful for high-throughput route guards that
+   * only care about reject/accept.
    */
-  turbo?: boolean
+  abortEarly?: boolean
 }
 
 declare const fastifyAta: FastifyPluginCallback<FastifyAtaOptions>
