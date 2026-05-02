@@ -1,6 +1,6 @@
 {
   "name": "fastify-ata",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Fastify plugin for ata-validator. Runtime-competitive with the default, 24x faster serverless cold start, Standard Schema V1.",
   "main": "index.js",
   "types": "index.d.ts",
