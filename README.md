@@ -44,6 +44,37 @@ fastify.listen({ port: 3000 })
 
 All your existing JSON Schema route definitions work as-is.
 
+## TypeScript
+
+Write plain JSON Schema and get typed route handlers, no builder DSL. Add the `AtaTypeProvider` and author schemas with `defineSchema`:
+
+```ts
+import Fastify from 'fastify'
+import fastifyAta from 'fastify-ata'
+import { defineSchema } from 'ata-validator'
+
+const app = Fastify().withTypeProvider<fastifyAta.AtaTypeProvider>()
+await app.register(fastifyAta)
+
+app.post('/user', {
+  schema: {
+    body: defineSchema({
+      type: 'object',
+      properties: { name: { type: 'string' }, age: { type: 'integer' } },
+      required: ['name'],
+    }),
+  },
+}, (req, reply) => {
+  req.body.name // string
+  req.body.age  // number | undefined
+  reply.send({ ok: true })
+})
+```
+
+`defineSchema` preserves the schema's literal types, so `request.body`, `request.query`, `request.params`, and `request.headers` are inferred from the schema. Same idea as `@fastify/type-provider-typebox`, from plain JSON Schema.
+
+`ata-validator` falls back to a pure-JS engine where the native addon is not available (Cloudflare Workers, browsers, Bun), so fastify-ata runs in those environments too.
+
 ## Options
 
 ```js
@@ -51,8 +82,17 @@ fastify.register(fastifyAta, {
   coerceTypes: true,       // convert "42" -> 42 for integer fields
   removeAdditional: true,  // strip properties not in schema
   abortEarly: true,        // skip detailed error collection (faster invalid path)
+  prettyErrors: true,      // 400 message carries the ATA code + a did-you-mean
 })
 ```
+
+With `prettyErrors`, a failed request returns a compiler-style message instead of the plain ajv text:
+
+```
+body must have required property 'name' [ATA7001] (did you mean `name` instead of `nme`?)
+```
+
+Off by default to keep the ajv-compatible message shape.
 
 `abortEarly` replaces the error list with a shared stub. Good for public endpoints where only the accept/reject decision reaches the caller. On a 10-property schema the invalid path drops from roughly 15 ns/op to 3.7 ns/op.
 
