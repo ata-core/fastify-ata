@@ -14,9 +14,10 @@ const { Validator } = require('ata-validator')
 function AtaCompiler() {
   return function buildCompilerFromPool(externalSchemas, options) {
     const customOptions = (options && options.customOptions) || {}
-    // Default to Fastify's default AJV behavior: coerce, apply defaults,
-    // strip undeclared properties. Honor explicit overrides.
-    const coerceTypes = customOptions.coerceTypes !== undefined ? !!customOptions.coerceTypes : true
+    // Default to Fastify's default AJV behavior: coerce (array mode, so a scalar
+    // becomes a single-element array), apply defaults, strip undeclared
+    // properties. Honor explicit overrides, preserving the 'array' mode value.
+    const coerceTypes = customOptions.coerceTypes !== undefined ? customOptions.coerceTypes : 'array'
     const removeAdditional = customOptions.removeAdditional !== undefined ? !!customOptions.removeAdditional : true
     // Fastify's default AJV runs with allErrors: false, reporting only the
     // first violation. Mirror that unless the caller opts into allErrors. ata's
