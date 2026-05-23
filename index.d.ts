@@ -11,6 +11,12 @@ interface FastifyAtaOptions {
    * only care about reject/accept.
    */
   abortEarly?: boolean
+  /**
+   * Install a schema error formatter that renders compiler-grade messages,
+   * including the ATA error code and a did-you-mean suggestion when available.
+   * Off by default to preserve AJV-compatible error messages.
+   */
+  prettyErrors?: boolean
 }
 
 declare const fastifyAta: FastifyPluginCallback<FastifyAtaOptions>

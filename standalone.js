@@ -73,13 +73,7 @@ function wrapValidator(validateFn) {
         validate.errors = null
         return true
       }
-      validate.errors = result.errors.map(e => ({
-        message: e.message,
-        instancePath: e.path || '',
-        schemaPath: '',
-        keyword: e.code || 'validation',
-        params: {},
-      }))
+      validate.errors = result.errors
       return false
     }
     // Boolean result

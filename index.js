@@ -3,6 +3,18 @@
 const fp = require('fastify-plugin')
 const { Validator } = require('ata-validator')
 
+function prettyFormat(errors, dataVar) {
+  const message = errors.map((e) => {
+    let line = `${dataVar}${e.instancePath || ''} ${e.message}`
+    if (e.code) line += ` [${e.code}]`
+    if (e.suggestion && e.suggestion.text) line += ` (${e.suggestion.text})`
+    return line
+  }).join(', ')
+  const err = new Error(message)
+  err.statusCode = 400
+  return err
+}
+
 function fastifyAta(fastify, opts, done) {
   const cache = new WeakMap()
   const hasCoercion = !!(opts.coerceTypes || opts.removeAdditional)
@@ -10,6 +22,10 @@ function fastifyAta(fastify, opts, done) {
     coerceTypes: opts.coerceTypes || false,
     removeAdditional: opts.removeAdditional || false,
     abortEarly: opts.abortEarly || false,
+  }
+
+  if (opts.prettyErrors) {
+    fastify.setSchemaErrorFormatter(prettyFormat)
   }
 
   fastify.setValidatorCompiler(({ schema }) => {
