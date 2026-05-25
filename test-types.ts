@@ -36,3 +36,52 @@ app.get('/search', {
   void _q
   return { ok: true }
 })
+
+// anyOf body narrows to a union
+app.post('/event', {
+  schema: {
+    body: defineSchema({
+      anyOf: [
+        { type: 'object', properties: { kind: { const: 'a' }, n: { type: 'number' } }, required: ['kind', 'n'] },
+        { type: 'object', properties: { kind: { const: 'b' }, s: { type: 'string' } }, required: ['kind', 's'] },
+      ],
+    }),
+  },
+}, async (req) => {
+  const _exact: Expect<typeof req.body, { kind: 'a'; n: number } | { kind: 'b'; s: string }> = true
+  void _exact
+  return { ok: true }
+})
+
+// $ref body resolves the referenced $defs entry
+app.post('/place', {
+  schema: {
+    body: defineSchema({
+      $defs: { Point: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' } }, required: ['x', 'y'] } },
+      type: 'object',
+      properties: { at: { $ref: '#/$defs/Point' } },
+      required: ['at'],
+    }),
+  },
+}, async (req) => {
+  const _x: number = req.body.at.x
+  const _exact: Expect<typeof req.body, { at: { x: number; y: number } }> = true
+  void _x; void _exact
+  return { ok: true }
+})
+
+// allOf body narrows to an intersection
+app.post('/merged', {
+  schema: {
+    body: defineSchema({
+      allOf: [
+        { type: 'object', properties: { a: { type: 'number' } }, required: ['a'] },
+        { type: 'object', properties: { b: { type: 'string' } }, required: ['b'] },
+      ],
+    }),
+  },
+}, async (req) => {
+  const _exact: Expect<typeof req.body, { a: number; b: string }> = true
+  void _exact
+  return { ok: true }
+})
