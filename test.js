@@ -459,6 +459,31 @@ async function run() {
   await tApp.close()
   */
 
+  // Cross-schema $ref via addSchema: the plugin must pass external schemas to ata,
+  // and ata must resolve both external $id refs and draft-07 #anchor refs.
+  const refApp = fastify()
+  await refApp.register(fastifyAta)
+  refApp.addSchema({ $id: 'http://foo/test', type: 'object', properties: { id: { type: 'number' } } })
+  refApp.post('/ref', {
+    schema: {
+      body: {
+        $id: 'http://foo/user',
+        type: 'object',
+        definitions: { address: { $id: '#address', type: 'object', properties: { city: { type: 'string' } }, required: ['city'] } },
+        required: ['address'],
+        properties: { test: { $ref: 'http://foo/test#' }, address: { $ref: '#address' } },
+      },
+    },
+  }, (req, reply) => reply.send({ ok: true }))
+  await refApp.ready()
+  const refGood = await refApp.inject({ method: 'POST', url: '/ref', payload: { test: { id: 1 }, address: { city: 'x' } } })
+  const refBadExt = await refApp.inject({ method: 'POST', url: '/ref', payload: { test: { id: 'no' }, address: { city: 'x' } } })
+  const refBadLocal = await refApp.inject({ method: 'POST', url: '/ref', payload: { test: { id: 1 }, address: {} } })
+  assert(refGood.statusCode === 200, 'cross-schema $ref: valid request accepted')
+  assert(refBadExt.statusCode === 400 && !/cannot resolve/.test(refBadExt.payload), 'cross-schema $ref: external $id ref enforced')
+  assert(refBadLocal.statusCode === 400 && !/cannot resolve/.test(refBadLocal.payload), 'cross-schema $ref: local #anchor enforced')
+  await refApp.close()
+
   console.log(`\n${pass}/${pass + fail} tests passed\n`)
   process.exit(fail > 0 ? 1 : 0)
 }

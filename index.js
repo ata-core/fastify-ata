@@ -31,7 +31,10 @@ function fastifyAta(fastify, opts, done) {
   fastify.setValidatorCompiler(({ schema }) => {
     let validator = cache.get(schema)
     if (!validator) {
-      validator = new Validator(schema, validatorOpts)
+      // Pass schemas registered via `fastify.addSchema` so cross-schema `$ref`
+      // (e.g. `{ $ref: 'shared#' }`) resolves. Compilers run at ready() time,
+      // after every addSchema, so getSchemas() returns the full bucket.
+      validator = new Validator(schema, { ...validatorOpts, schemas: fastify.getSchemas() })
       cache.set(schema, validator)
     }
     const validate = (data) => {
