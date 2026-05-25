@@ -1,0 +1,7 @@
+{
+  "$defs": { "Point": { "type": "object", "properties": { "x": { "type": "number" }, "y": { "type": "number" } }, "required": ["x", "y"] } },
+  "anyOf": [
+    { "type": "object", "properties": { "kind": { "const": "click" }, "at": { "$ref": "#/$defs/Point" } }, "required": ["kind", "at"] },
+    { "type": "object", "properties": { "kind": { "const": "key" }, "code": { "type": "string" } }, "required": ["kind", "code"] }
+  ]
+}

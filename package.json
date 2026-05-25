@@ -34,6 +34,8 @@
     "fastify": ">=4.0.0"
   },
   "devDependencies": {
+    "@fastify/type-provider-typebox": "^6.1.0",
+    "@sinclair/typebox": "^0.34.49",
     "@types/node": "^25.9.1",
     "autocannon": "^8.0.0",
     "fastify": "^5.8.4",
