@@ -75,6 +75,33 @@ app.post('/user', {
 
 `ata-validator` falls back to a pure-JS engine where the native addon is not available (Cloudflare Workers, browsers, Bun), so fastify-ata runs in those environments too.
 
+### Chainable authoring (TypeBox-style)
+
+If you prefer a chainable builder over JSON Schema literals, `ata-validator/t` emits the same plain JSON Schema under the hood, so route schemas, the type provider, and the AOT path all keep working without an adapter. The migration from TypeBox is one import rename:
+
+```ts
+import Fastify from 'fastify'
+import fastifyAta from 'fastify-ata'
+import { t } from 'ata-validator/t'
+
+const app = Fastify().withTypeProvider<fastifyAta.AtaTypeProvider>()
+await app.register(fastifyAta)
+
+const Body = t.object({
+  name: t.string({ minLength: 1 }),
+  age: t.integer({ minimum: 0 }),
+  email: t.optional(t.string({ format: 'email' })),
+  role: t.union([t.literal('admin'), t.literal('user')]),
+})
+
+app.post('/users', { schema: { body: Body } }, (req, reply) => {
+  req.body.name    // string
+  req.body.email   // string | undefined
+  req.body.role    // 'admin' | 'user'
+  reply.send({ ok: true })
+})
+```
+
 ## Options
 
 ```js
