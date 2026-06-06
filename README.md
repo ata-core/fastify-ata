@@ -123,6 +123,48 @@ Off by default to keep the ajv-compatible message shape.
 
 `abortEarly` replaces the error list with a shared stub. Good for public endpoints where only the accept/reject decision reaches the caller. On a 10-property schema the invalid path drops from roughly 15 ns/op to 3.7 ns/op.
 
+## Two ways to plug in
+
+### Plugin (encapsulated)
+
+`fastify.register(fastifyAta)` sets the validator compiler in the context it is registered into. Register it on the root instance and it applies everywhere; register it inside a plugin and only that subtree uses ata, while the rest of the app keeps the default validator. Use this when you want ata for some routes and the default for others, or when you are adding ata to an existing app without touching the server construction.
+
+### Global default (full replacement)
+
+If you want ata to be the validator for the whole server, pass the compiler factory at construction time instead. This is the same `schemaController.compilersFactory.buildValidator` hook that `@fastify/ajv-compiler` and [`joi-compiler`](https://github.com/Eomm/joi-compiler) use, so the default ajv validator is never built.
+
+```js
+const Fastify = require('fastify')
+const AtaCompiler = require('fastify-ata/compiler')
+
+const app = Fastify({
+  schemaController: { compilersFactory: { buildValidator: AtaCompiler() } },
+})
+
+app.post('/user', {
+  schema: {
+    body: {
+      type: 'object',
+      properties: { name: { type: 'string' }, age: { type: 'integer' } },
+      required: ['name'],
+    },
+  },
+}, (req, reply) => reply.send({ ok: true }))
+```
+
+The factory mirrors `@fastify/ajv-compiler`: it defaults to Fastify's own ajv behavior (`coerceTypes: 'array'`, `removeAdditional: true`, first error only) and reads `addSchema` registrations for cross-schema `$ref`. Override through `customOptions`:
+
+```js
+buildValidator: AtaCompiler() // defaults match Fastify's ajv
+// per-instance overrides are read from ajv.customOptions, e.g.:
+const app = Fastify({
+  ajv: { customOptions: { coerceTypes: false, allErrors: true } },
+  schemaController: { compilersFactory: { buildValidator: AtaCompiler() } },
+})
+```
+
+Note on memory: this replaces the ajv *validator*, so it is never instantiated. The `ajv` module itself can still be pulled into the process by Fastify's serializer (`fast-json-stringify` uses it to check serialization schemas), independent of which validator you choose. Replacing the validator removes ajv from the request validation path, not necessarily from the module graph.
+
 ## Standalone Mode (Pre-compiled)
 
 Drop-in replacement for `@fastify/ajv-compiler/standalone`. Same API.
