@@ -1,6 +1,7 @@
 'use strict'
 
 const { Validator } = require('ata-validator')
+const { toStandaloneModule } = require('ata-validator/build')
 
 // Fastify schemaController compatible standalone compiler.
 // Same API as @fastify/ajv-compiler/standalone — drop-in replacement.
@@ -31,12 +32,15 @@ function StandaloneValidator(options = { readMode: true }) {
     return function wrapper() {
       return function buildValidatorFunction(opts) {
         const mod = options.restoreFunction(opts)
-        // mod is either a function (standalone) or { boolFn, hybridFactory, errFn }
+        // mod is a function (standalone), a { validate, isValid } module
+        // (toStandaloneModule output), or a legacy { boolFn, hybridFactory,
+        // errFn } artifact from the pre-1.0 instance toStandalone().
         if (typeof mod === 'function') {
-          // Direct function — just wrap for Fastify
           return wrapValidator(mod)
         }
-        // Module from toStandalone() — restore via fromStandalone
+        if (typeof mod.validate === 'function') {
+          return wrapValidator(mod.validate)
+        }
         if (mod.boolFn || mod.hybridFactory) {
           const v = Validator.fromStandalone(mod, opts.schema)
           return wrapValidator((data) => v.validate(data))
@@ -52,7 +56,8 @@ function StandaloneValidator(options = { readMode: true }) {
   return function wrapper() {
     return function buildValidatorFunction(opts) {
       const v = new Validator(opts.schema)
-      const standalone = v.toStandalone()
+      // CJS so the stored file works with a plain require() in restoreFunction.
+      const standalone = toStandaloneModule(v, { format: 'cjs' })
 
       if (standalone) {
         options.storeFunction(opts, standalone)
