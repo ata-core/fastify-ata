@@ -30,6 +30,10 @@ function AtaCompiler() {
       schemas: externalSchemas,
       coerceTypes,
       removeAdditional,
+      // Fastify's ecosystem (error handlers, tests, ajv-errors consumers)
+      // asserts the exact ajv error object shape; the rich fields belong to
+      // the plugin path, not the default-validator path.
+      richErrors: false,
     }
 
     return function buildValidatorFunction({ schema }) {
@@ -40,7 +44,11 @@ function AtaCompiler() {
           validate.errors = null
           return hasCoercion ? { value: data } : true
         }
-        validate.errors = firstErrorOnly ? [result.errors[0]] : result.errors
+        // Plain mutable copies: ajv ecosystem plugins (ajv-i18n, error
+        // decorators) assign to error fields, and ata's error objects are
+        // frozen.
+        const errors = firstErrorOnly ? [result.errors[0]] : result.errors
+        validate.errors = errors.map((e) => ({ ...e }))
         return false
       }
       validate.errors = null

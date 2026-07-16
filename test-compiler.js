@@ -24,7 +24,15 @@ async function run() {
   assert(validate({ n: 1 }) === true || (validate({ n: 1 }) && validate({ n: 1 }).value), 'compiler: valid input accepted')
   const bad = validate({})
   assert(bad === false, 'compiler: invalid input rejected')
-  assert(validate.errors && validate.errors[0].code, `compiler: rich errors present (got ${JSON.stringify(validate.errors && validate.errors[0])})`)
+  // The compiler path is Fastify's default-validator route: errors must be
+  // the exact ajv shape (no rich fields) and mutable, because ecosystem
+  // plugins like ajv-i18n assign to error.message. Rich errors belong to the
+  // plugin path.
+  const err0 = validate.errors && validate.errors[0]
+  assert(err0 && err0.keyword && err0.message && err0.code === undefined && err0.docUrl === undefined,
+    `compiler: ajv-shaped errors (got ${JSON.stringify(err0)})`)
+  err0.message = 'mutated'
+  assert(err0.message === 'mutated', 'compiler: error objects are mutable')
 
   // As Fastify's GLOBAL default via schemaController, with cross-schema $ref
   const app = Fastify({
