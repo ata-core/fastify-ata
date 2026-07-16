@@ -1,6 +1,7 @@
 'use strict'
 
 const { Validator } = require('ata-validator')
+const { expandMergePatch } = require('./merge-patch')
 
 // @fastify/ajv-compiler-compatible factory so ata can be installed as
 // Fastify's global default validator:
@@ -37,6 +38,7 @@ function AtaCompiler() {
     }
 
     return function buildValidatorFunction({ schema }) {
+      schema = expandMergePatch(schema)
       const validator = new Validator(schema, validatorOpts)
       function validate(data) {
         const result = validator.validate(data)

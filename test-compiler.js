@@ -5,6 +5,7 @@
 
 const Fastify = require('fastify')
 const AtaCompiler = require('./compiler')
+const { expandMergePatch } = require('./merge-patch')
 
 let pass = 0
 let fail = 0
@@ -69,6 +70,97 @@ async function run() {
   assert(qRes.statusCode === 200, `compiler: coerced querystring -> 200 (got ${qRes.statusCode})`)
   assert(JSON.parse(qRes.payload).typ === 'number', `compiler: querystring coerced to number (got ${qRes.payload})`)
   await app2.close()
+
+  // --- $merge / $patch expansion tests ---
+
+  // root $merge: required added via with
+  const mergeResult = expandMergePatch({
+    $merge: {
+      source: { type: 'object', properties: { q: { type: 'string' } } },
+      with: { required: ['q'] }
+    }
+  })
+  assert(
+    mergeResult.type === 'object' &&
+    Array.isArray(mergeResult.required) &&
+    mergeResult.required[0] === 'q',
+    '$merge: required added via with'
+  )
+
+  // root $patch: add op changes a property type
+  const patchResult = expandMergePatch({
+    $patch: {
+      source: { type: 'object', properties: { q: { type: 'string' } } },
+      with: [{ op: 'add', path: '/properties/q', value: { type: 'number' } }]
+    }
+  })
+  assert(
+    patchResult.properties && patchResult.properties.q && patchResult.properties.q.type === 'number',
+    '$patch: add op changes property type'
+  )
+
+  // nested $merge inside a larger schema
+  const nestedSchema = {
+    type: 'object',
+    properties: {
+      inner: {
+        $merge: {
+          source: { type: 'object', properties: { n: { type: 'integer' } } },
+          with: { required: ['n'] }
+        }
+      }
+    }
+  }
+  const nestedResult = expandMergePatch(nestedSchema)
+  assert(
+    nestedResult.properties.inner.required &&
+    nestedResult.properties.inner.required[0] === 'n' &&
+    nestedResult.properties.inner.type === 'object',
+    '$merge nested: expansion works inside properties'
+  )
+
+  // null deletes key in $merge
+  const nullDeleteResult = expandMergePatch({
+    $merge: {
+      source: { type: 'object', required: ['x'], properties: { x: { type: 'string' } } },
+      with: { required: null }
+    }
+  })
+  assert(
+    !('required' in nullDeleteResult),
+    '$merge null: null in with deletes the key'
+  )
+
+  // unsupported op throws
+  let threw = false
+  try {
+    expandMergePatch({
+      $patch: {
+        source: { type: 'object' },
+        with: [{ op: 'move', from: '/a', path: '/b' }]
+      }
+    })
+  } catch (e) {
+    threw = e.message.includes('unsupported op')
+  }
+  assert(threw, '$patch: unsupported op throws with clear message')
+
+  // schema without $merge/$patch passes through unchanged (no copy)
+  const plain = { type: 'object', properties: { x: { type: 'string' } } }
+  assert(expandMergePatch(plain) === plain, '$merge/$patch: plain schema passes through without copy')
+
+  // $merge integration: compiler accepts expanded schema
+  const factory2 = AtaCompiler()
+  const build2 = factory2({}, { customOptions: {} })
+  const mergeSchema = {
+    $merge: {
+      source: { type: 'object', properties: { n: { type: 'integer' } } },
+      with: { required: ['n'] }
+    }
+  }
+  const validateMerge = build2({ schema: mergeSchema })
+  assert(validateMerge({ n: 1 }) !== false, '$merge compiler integration: valid input accepted')
+  assert(validateMerge({}) === false, '$merge compiler integration: missing required rejected')
 
   console.log(`\n${pass}/${pass + fail} tests passed\n`)
   process.exit(fail > 0 ? 1 : 0)

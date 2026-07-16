@@ -2,6 +2,7 @@
 
 const fp = require('fastify-plugin')
 const { Validator } = require('ata-validator')
+const { expandMergePatch } = require('./merge-patch')
 
 function prettyFormat(errors, dataVar) {
   const message = errors.map((e) => {
@@ -31,6 +32,7 @@ function fastifyAta(fastify, opts, done) {
   fastify.setValidatorCompiler(({ schema }) => {
     let validator = cache.get(schema)
     if (!validator) {
+      schema = expandMergePatch(schema)
       // Pass schemas registered via `fastify.addSchema` so cross-schema `$ref`
       // (e.g. `{ $ref: 'shared#' }`) resolves. Compilers run at ready() time,
       // after every addSchema, so getSchemas() returns the full bucket.
