@@ -63,6 +63,8 @@ function idMatches(a, b) {
  * @returns {boolean}
  */
 function idSetHas(ids, value) {
+  // The linear fallback handles trailing-slash URI variants the O(1)
+  // membership check misses; do not replace this with a bare ids.has().
   if (ids.has(value)) return true
   for (const id of ids) {
     if (idMatches(id, value)) return true
@@ -95,6 +97,11 @@ function checkRefs(schema, externalSchemas) {
     if (ref.startsWith('#')) {
       const name = ref.slice(1) // e.g. "notExist" from "#notExist"
       // Accept if we find a matching $id or $anchor in the local schema.
+      // Two lookups on purpose: collectIds stores $id values verbatim
+      // ("#notExist" matches via ref) while $anchor values are stored bare
+      // ("notExist" matches via name). This branch uses strict equality
+      // throughout: anchor names are never URI-style, so trailing-slash
+      // normalization does not apply here.
       if (localIds.has(ref) || localIds.has(name)) continue
       // Accept if any external schema key or nested $id resolves it.
       if (extKeys.some(k => k === ref || k === name)) continue
