@@ -287,6 +287,25 @@ async function run() {
     assert(!threw, 'ref-check: anchor #addr existing as $id in local definitions does NOT throw')
   }
 
+  // (f) trailing-slash URI variant: external key 'http://fastify.test/' must
+  // satisfy ref base 'http://fastify.test' (RFC 3986 normalization, ajv resolves it)
+  {
+    const factory8 = AtaCompiler()
+    const build8 = factory8(
+      { 'http://fastify.test/': { $id: 'http://fastify.test/', type: 'object', properties: { hello: { type: 'string' } } } },
+      { customOptions: {} }
+    )
+    let threw = false
+    let thrownMsg = ''
+    try {
+      build8({ schema: { type: 'array', items: { $ref: 'http://fastify.test#/properties/hello' } } })
+    } catch (e) {
+      threw = true
+      thrownMsg = e.message
+    }
+    assert(!threw, `ref-check: trailing-slash URI id variant does NOT throw (got: ${thrownMsg})`)
+  }
+
   console.log(`\n${pass}/${pass + fail} tests passed\n`)
   process.exit(fail > 0 ? 1 : 0)
 }

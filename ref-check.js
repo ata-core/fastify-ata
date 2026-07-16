@@ -42,6 +42,35 @@ function collectIds(schema, ids) {
 }
 
 /**
+ * Trailing-slash-insensitive identifier comparison. Per RFC 3986
+ * normalization, 'http://x.test/' and 'http://x.test' identify the same
+ * resource and the default resolver accepts either spelling; comparing
+ * literally would produce false positives. This only ADDS acceptance.
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
+function idMatches(a, b) {
+  if (a === b) return true
+  const stripA = a.endsWith('/') ? a.slice(0, -1) : a
+  const stripB = b.endsWith('/') ? b.slice(0, -1) : b
+  return stripA === stripB
+}
+
+/**
+ * @param {Set<string>} ids
+ * @param {string} value
+ * @returns {boolean}
+ */
+function idSetHas(ids, value) {
+  if (ids.has(value)) return true
+  for (const id of ids) {
+    if (idMatches(id, value)) return true
+  }
+  return false
+}
+
+/**
  * Check whether a $ref is clearly unresolvable. Throws with ajv-compatible
  * message on the FIRST clearly-unresolvable ref found.
  *
@@ -85,11 +114,12 @@ function checkRefs(schema, externalSchemas) {
     const base = hashIdx === -1 ? ref : ref.slice(0, hashIdx)
     if (!base) continue // bare '#' or '#/...' already handled above
 
-    // Accept if base matches any external schema key.
-    if (extKeys.some(k => k === base)) continue
+    // Accept if base matches any external schema key
+    // (trailing-slash-insensitive for URI-style ids).
+    if (extKeys.some(k => idMatches(k, base))) continue
 
     // Accept if base is found as any nested $id in the local schema.
-    if (localIds.has(base)) continue
+    if (idSetHas(localIds, base)) continue
 
     // Accept if base matches any nested $id in any external schema.
     if (extKeys.some(k => {
@@ -97,7 +127,7 @@ function checkRefs(schema, externalSchemas) {
       if (!ext || typeof ext !== 'object') return false
       const extIds = new Set()
       collectIds(ext, extIds)
-      return extIds.has(base)
+      return idSetHas(extIds, base)
     })) continue
 
     // Clearly unresolvable external ref.
