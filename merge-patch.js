@@ -70,11 +70,17 @@ function applyJsonPatch(source, ops) {
       }
       const { parent, key } = resolvePointer(doc, path)
       if (parent == null) throw new Error(`$patch: invalid path "${path}"`)
+      if (opName === 'replace' && !(key in parent)) {
+        throw new Error(`$patch: cannot replace non-existent path "${path}"`)
+      }
       parent[key] = value
     } else if (opName === 'remove') {
       if (path === '') throw new Error('$patch: cannot remove root')
       const { parent, key } = resolvePointer(doc, path)
       if (parent == null) throw new Error(`$patch: invalid path "${path}"`)
+      if (!(key in parent)) {
+        throw new Error(`$patch: cannot remove non-existent path "${path}"`)
+      }
       delete parent[key]
     } else {
       throw new Error(`$patch: unsupported op "${opName}" (only add/replace/remove supported)`)
@@ -84,25 +90,28 @@ function applyJsonPatch(source, ops) {
 }
 
 // Recursively expand $merge/$patch in schema. Returns a new object; never mutates.
-function expand(schema) {
+function expand(schema, depth = 0) {
+  if (depth > 100) {
+    throw new Error('$merge/$patch: expansion exceeded depth limit (circular?)')
+  }
   if (!schema || typeof schema !== 'object') return schema
-  if (Array.isArray(schema)) return schema.map(expand)
+  if (Array.isArray(schema)) return schema.map(s => expand(s, depth))
 
   if ('$merge' in schema) {
-    const source = expand(schema.$merge.source)
-    const patch = expand(schema.$merge.with)
-    return expand(applyMergePatch(source, patch))
+    const source = expand(schema.$merge.source, depth + 1)
+    const patch = expand(schema.$merge.with, depth + 1)
+    return expand(applyMergePatch(source, patch), depth + 1)
   }
 
   if ('$patch' in schema) {
-    const source = expand(schema.$patch.source)
+    const source = expand(schema.$patch.source, depth + 1)
     const ops = schema.$patch.with
-    return expand(applyJsonPatch(source, ops))
+    return expand(applyJsonPatch(source, ops), depth + 1)
   }
 
   const result = {}
   for (const key of Object.keys(schema)) {
-    result[key] = expand(schema[key])
+    result[key] = expand(schema[key], depth)
   }
   return result
 }

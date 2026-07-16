@@ -145,6 +145,47 @@ async function run() {
   }
   assert(threw, '$patch: unsupported op throws with clear message')
 
+  // remove on non-existent path throws
+  let removeMissingThrew = false
+  try {
+    expandMergePatch({
+      $patch: {
+        source: { type: 'object', properties: { x: { type: 'string' } } },
+        with: [{ op: 'remove', path: '/properties/y' }]
+      }
+    })
+  } catch (e) {
+    removeMissingThrew = e.message.includes('cannot remove non-existent path')
+  }
+  assert(removeMissingThrew, '$patch: remove on non-existent path throws')
+
+  // replace on non-existent path throws
+  let replaceMissingThrew = false
+  try {
+    expandMergePatch({
+      $patch: {
+        source: { type: 'object', properties: { x: { type: 'string' } } },
+        with: [{ op: 'replace', path: '/properties/z', value: { type: 'number' } }]
+      }
+    })
+  } catch (e) {
+    replaceMissingThrew = e.message.includes('cannot replace non-existent path')
+  }
+  assert(replaceMissingThrew, '$patch: replace on non-existent path throws')
+
+  // expansion depth limit: construct deeply nested $merge chain that exceeds limit
+  let depthThrew = false
+  const buildDeepMerge = (depth) => {
+    if (depth === 0) return { type: 'object' }
+    return { $merge: { source: buildDeepMerge(depth - 1), with: { properties: { x: { type: 'string' } } } } }
+  }
+  try {
+    expandMergePatch(buildDeepMerge(105))
+  } catch (e) {
+    depthThrew = e.message.includes('expansion exceeded depth limit')
+  }
+  assert(depthThrew, '$merge/$patch: expansion depth limit enforced')
+
   // schema without $merge/$patch passes through unchanged (no copy)
   const plain = { type: 'object', properties: { x: { type: 'string' } } }
   assert(expandMergePatch(plain) === plain, '$merge/$patch: plain schema passes through without copy')
