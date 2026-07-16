@@ -203,6 +203,90 @@ async function run() {
   assert(validateMerge({ n: 1 }) !== false, '$merge compiler integration: valid input accepted')
   assert(validateMerge({}) === false, '$merge compiler integration: missing required rejected')
 
+  // --- $ref resolvability checks ---
+
+  // (a) anchor-style local ref that does not exist -> must throw
+  {
+    const factory3 = AtaCompiler()
+    const build3 = factory3({}, { customOptions: {} })
+    let threw = false
+    let thrownMsg = ''
+    try {
+      build3({ schema: { type: 'object', properties: { name: { $ref: '#notExist' } } } })
+    } catch (e) {
+      threw = true
+      thrownMsg = e.message
+    }
+    assert(threw, 'ref-check: #notExist with no externals throws')
+    assert(thrownMsg === "can't resolve reference #notExist from id #",
+      `ref-check: #notExist message exact (got: ${thrownMsg})`)
+  }
+
+  // (b) external ref with no matching external schema -> must throw
+  {
+    const factory4 = AtaCompiler()
+    const build4 = factory4({}, { customOptions: {} })
+    let threw = false
+    let thrownMsg = ''
+    try {
+      build4({ schema: { type: 'object', properties: { id: { $ref: 'encapsulation#/properties/id' } } } })
+    } catch (e) {
+      threw = true
+      thrownMsg = e.message
+    }
+    assert(threw, 'ref-check: encapsulation#/properties/id with no externals throws')
+    assert(thrownMsg === "can't resolve reference encapsulation#/properties/id from id #",
+      `ref-check: encapsulation message exact (got: ${thrownMsg})`)
+  }
+
+  // (c) external ref WITH matching external schema -> must NOT throw
+  {
+    const factory5 = AtaCompiler()
+    const build5 = factory5(
+      { encapsulation: { $id: 'encapsulation', type: 'object', properties: { id: { type: 'number' } } } },
+      { customOptions: {} }
+    )
+    let threw = false
+    try {
+      build5({ schema: { type: 'object', properties: { id: { $ref: 'encapsulation#/properties/id' } } } })
+    } catch (e) {
+      threw = true
+    }
+    assert(!threw, 'ref-check: encapsulation#/properties/id with external schema does NOT throw')
+  }
+
+  // (d) local JSON-pointer ref -> always accepted even when definitions absent
+  {
+    const factory6 = AtaCompiler()
+    const build6 = factory6({}, { customOptions: {} })
+    let threw = false
+    try {
+      build6({ schema: { type: 'object', properties: { x: { $ref: '#/definitions/x' } } } })
+    } catch (e) {
+      threw = true
+    }
+    assert(!threw, 'ref-check: local JSON-pointer #/definitions/x does NOT throw (conservative)')
+  }
+
+  // (e) anchor that EXISTS as $id in a local definition -> must NOT throw
+  {
+    const factory7 = AtaCompiler()
+    const build7 = factory7({}, { customOptions: {} })
+    let threw = false
+    try {
+      build7({
+        schema: {
+          type: 'object',
+          definitions: { addr: { $id: '#addr', type: 'string' } },
+          properties: { city: { $ref: '#addr' } }
+        }
+      })
+    } catch (e) {
+      threw = true
+    }
+    assert(!threw, 'ref-check: anchor #addr existing as $id in local definitions does NOT throw')
+  }
+
   console.log(`\n${pass}/${pass + fail} tests passed\n`)
   process.exit(fail > 0 ? 1 : 0)
 }
