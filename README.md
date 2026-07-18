@@ -270,7 +270,7 @@ Generated file has zero runtime dependency on `ata-validator`. `isValid` is emit
 - **simdjson** - SIMD-accelerated JSON parsing for buffer-input paths
 - **Multi-core** - `countValid(ndjsonBuf)` validates many messages in one native call
 - **Standard Schema V1** - native support, works with Fastify v5, tRPC, TanStack Form, Drizzle
-- **Draft 2020-12 and Draft 7** - 99.5% compliance on the official JSON Schema Test Suite
+- **Draft 2020-12 and Draft 7** - every applicable draft 2020-12 case in the official JSON Schema Test Suite passes with the native engine installed (1190/1190); 99.8% pure JS
 - **Fastify's own suite** - 181 of 187 tests pass with ata as the default validator; the remaining six test the default validator's private extension API. See [compat/COMPATIBILITY.md](compat/COMPATIBILITY.md)
 
 ## License
