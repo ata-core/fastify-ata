@@ -18,10 +18,16 @@ function prettyFormat(errors, dataVar) {
 
 function fastifyAta(fastify, opts, done) {
   const cache = new WeakMap()
-  const hasCoercion = !!(opts.coerceTypes || opts.removeAdditional)
+  // Defaults mirror Fastify's stock validator configuration (and compiler.js):
+  // types are coerced with querystring array support and additional properties
+  // are removed. Anything else breaks `/users/:id` on the documented
+  // `register(fastifyAta)` path, because path params always arrive as strings.
+  const coerceTypes = opts.coerceTypes !== undefined ? opts.coerceTypes : 'array'
+  const removeAdditional = opts.removeAdditional !== undefined ? !!opts.removeAdditional : true
+  const hasCoercion = !!(coerceTypes || removeAdditional)
   const validatorOpts = {
-    coerceTypes: opts.coerceTypes || false,
-    removeAdditional: opts.removeAdditional || false,
+    coerceTypes,
+    removeAdditional,
     abortEarly: opts.abortEarly || false,
   }
 

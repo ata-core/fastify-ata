@@ -104,12 +104,14 @@ app.post('/users', { schema: { body: Body } }, (req, reply) => {
 
 ## Options
 
+Defaults mirror Fastify's stock validator: `coerceTypes: 'array'` (path params and querystring values arrive as strings and coerce to the schema types, single-element arrays collapse for querystrings) and `removeAdditional: true` (properties outside the schema are stripped, not rejected). Override either to opt out:
+
 ```js
 fastify.register(fastifyAta, {
-  coerceTypes: true,       // convert "42" -> 42 for integer fields
-  removeAdditional: true,  // strip properties not in schema
-  abortEarly: true,        // skip detailed error collection (faster invalid path)
-  prettyErrors: true,      // 400 message carries the ATA code + a did-you-mean
+  coerceTypes: false,       // reject "42" for integer fields instead of coercing
+  removeAdditional: false,  // 400 on properties outside the schema
+  abortEarly: true,         // skip detailed error collection (faster invalid path)
+  prettyErrors: true,       // 400 message carries the ATA code + a did-you-mean
 })
 ```
 

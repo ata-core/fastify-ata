@@ -1,9 +1,25 @@
 # Examples
 
-Two examples that show ata against TypeBox on the same Fastify route, picked
-because they answer the two questions teams ask before migrating: "does the
-type provider narrow exactly the same way" and "what does the migration
-diff actually look like."
+Three examples around the type provider. Two show ata against TypeBox on the
+same Fastify route, picked because they answer the two questions teams ask
+before migrating: "does the type provider narrow exactly the same way" and
+"what does the migration diff actually look like." The third is a runnable
+end-to-end API that asserts the runtime behavior, not just the types.
+
+## `typed-api-demo.ts` — a typed API end to end
+
+A small API using plain JSON Schema via `defineSchema`: typed path params with
+coercion, querystring defaults and enum narrowing, a discriminated-union body
+that narrows on its `kind` field, and a response schema enforced by the
+serializer. No manual type annotation and no cast anywhere in the handlers.
+It runs real requests through `fastify.inject` and asserts every behavior,
+including the 400 error shape.
+
+```sh
+npm install
+npx tsc --noEmit --strict --esModuleInterop examples/typed-api-demo.ts   # types
+node examples/typed-api-demo.ts                                          # runtime
+```
 
 ## `typebox-migration.ts` — TypeBox to `ata-validator/t`
 

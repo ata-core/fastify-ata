@@ -59,7 +59,7 @@ async function run() {
   const r3 = await app.inject({
     method: 'POST',
     url: '/user',
-    payload: { name: 123 },
+    payload: { name: {} }, // objects never coerce to string, so this stays a type error under Fastify-parity coercion defaults
   })
   assert(r3.statusCode === 400, `wrong type returns 400 (got ${r3.statusCode})`)
 
@@ -103,7 +103,7 @@ async function run() {
   const r4 = await app.inject({
     method: 'POST',
     url: '/user',
-    payload: { name: 123 },
+    payload: { name: {} }, // objects never coerce to string, so this stays a type error under Fastify-parity coercion defaults
   })
   const errBody4 = JSON.parse(r4.payload)
   assert(r4.statusCode === 400, `ajv-style: returns 400 (got ${r4.statusCode})`)
@@ -205,17 +205,31 @@ async function run() {
   await app7.close()
 
   // 14. additionalProperties: false
+  // Default config mirrors Fastify's stock validator: removeAdditional is on,
+  // so extra properties are stripped before the handler, not rejected.
   const app8 = fastify()
   await app8.register(fastifyAta)
   app8.post('/strict', {
     schema: { body: { type: 'object', properties: { id: { type: 'integer' } }, additionalProperties: false } },
-  }, (req, reply) => reply.send({ ok: true }))
+  }, (req, reply) => reply.send({ body: req.body }))
   await app8.ready()
   const rs1 = await app8.inject({ method: 'POST', url: '/strict', payload: { id: 1 } })
   const rs2 = await app8.inject({ method: 'POST', url: '/strict', payload: { id: 1, extra: 'x' } })
   assert(rs1.statusCode === 200, 'additionalProperties: valid accepted')
-  assert(rs2.statusCode === 400, `additionalProperties: extra rejected (got ${rs2.statusCode})`)
+  assert(rs2.statusCode === 200, `additionalProperties: extra stripped, request accepted (got ${rs2.statusCode})`)
+  assert(!('extra' in JSON.parse(rs2.payload).body), 'additionalProperties: extra property removed from body')
   await app8.close()
+
+  // 14b. removeAdditional: false restores strict rejection.
+  const app8b = fastify()
+  await app8b.register(fastifyAta, { removeAdditional: false })
+  app8b.post('/strict', {
+    schema: { body: { type: 'object', properties: { id: { type: 'integer' } }, additionalProperties: false } },
+  }, (req, reply) => reply.send({ ok: true }))
+  await app8b.ready()
+  const rs3 = await app8b.inject({ method: 'POST', url: '/strict', payload: { id: 1, extra: 'x' } })
+  assert(rs3.statusCode === 400, `additionalProperties: extra rejected with removeAdditional: false (got ${rs3.statusCode})`)
+  await app8b.close()
 
   // 15. array items validation
   const app9 = fastify()
@@ -393,7 +407,7 @@ async function run() {
   const t3 = await tApp.inject({
     method: 'POST',
     url: '/user',
-    payload: { name: 123 },
+    payload: { name: {} }, // objects never coerce to string, so this stays a type error under Fastify-parity coercion defaults
   })
   assert(t3.statusCode === 400, `turbo: wrong type returns 400 (got ${t3.statusCode})`)
 
