@@ -227,18 +227,36 @@ Works with Fastify v5's Standard Schema support, tRPC, TanStack Form, Drizzle OR
 
 All numbers below are reproducible on M4 Pro / Node 25 with the benchmarks in this repo and in `ata-validator/benchmark`. Run-to-run noise is roughly +/- 5% at these scales.
 
-### Fastify pipeline (`bench-realtime.js`, autocannon, 50 routes, 50 connections, 5s)
+### Throughput: not a reason to switch
 
-| | ajv (default) | ata |
-|---|---|---|
-| Requests/sec | 61,258 | 70,198 |
-| Latency, average | 0.06 ms | 0.05 ms |
-| Latency, p99 | 1.00 ms | 1.00 ms |
+`bench-realtime.js` reports about 15% more requests per second than ajv on a
+50-route app whose handlers do nothing. That number is reproducible and it is also
+misleading, so here is the whole picture. Sweeping the route count, echo handlers,
+50 connections:
 
-HTTP, routing and `JSON.parse` dominate a request, so the validator moves throughput
-by about 15% here and no more. `profile-fastify.mjs` splits one request and finds
-`JSON.parse` at 92% of the cost against validation at 7%. Throughput is not the
-reason to switch; the numbers below are.
+| Routes | ajv req/s | ata req/s | delta |
+|---|---|---|---|
+| 1 | 75,053 | 75,360 | +0.4% |
+| 10 | 64,333 | 74,259 | +15.4% |
+| 50 | 64,554 | 74,643 | +15.6% |
+| 200 | 66,486 | 65,491 | -1.5% |
+
+The gap is not a property of the validator, it is a dispatch effect that appears
+once there are enough distinct compiled validators to spoil V8's call-site caching
+and disappears again once there are many. Give the handler real work and it goes
+away entirely, one route, 50 to 200 connections:
+
+| Per-request work | ajv req/s | ata req/s | delta |
+|---|---|---|---|
+| none | 75,142 | 74,989 | -0.2% |
+| 1 ms | 70,342 | 71,418 | +1.5% |
+| 5 ms | 33,040 | 33,016 | -0.1% |
+| 20 ms | 9,310 | 9,236 | -0.8% |
+
+`profile-fastify.mjs` explains why: in one request `JSON.parse` is 92% of the cost
+and validation 7%. If your handler touches a database, the validator is not what
+decides your throughput. Switch for the boot numbers below, or for the errors,
+types and portability. Do not switch for requests per second.
 
 ### Where ata-validator moves the needle
 
