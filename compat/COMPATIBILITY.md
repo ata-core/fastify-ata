@@ -12,7 +12,7 @@ The preload swaps the single `require('@fastify/ajv-compiler')` inside Fastify's
 
 ## Current score
 
-**182 of 188 tests pass** (Fastify v5.8.5 checkout, ata-validator 1.3.0, fastify-ata main).
+**178 of 184 tests pass** (Fastify main at 5.8.5, ata-validator 1.7.2, fastify-ata 0.9.2).
 
 Everything Fastify's suite asserts about validation behavior passes: type checks and coercion (including the `array` coercion mode), defaults, `removeAdditional`, required and enum handling, cross-schema `$ref` through `addSchema`, draft-07 `$id` anchors, `nullable`, `oneOf`/`anyOf` branching, custom error messages via `errorMessage`, `$merge`/`$patch` keywords, fail-fast startup errors for unresolvable references, encapsulation scoping, error shape (exact default error object layout, mutable for plugins like ajv-i18n), the error paths in `validation-error-handling`, and shared-schema `$ref` into `/definitions` across the validator AND the serializer (ata never mutates caller-provided schema objects, so fast-json-stringify sees them untouched).
 
@@ -33,4 +33,4 @@ All six are AJV-identity tests. The former seventh (ajv-errors message ordering)
 
 ## Reading the number honestly
 
-The suite contains 187 tests because it grew around AJV; a hypothetical perfect drop-in that is not AJV tops out at 181. ata passes all 181. If you find a behavior difference not covered here, that is a bug in fastify-ata or ata: please open an issue.
+The suite grew around AJV, so six of its 184 tests assert that the validator is AJV rather than that validation is correct. A perfect drop-in that is not AJV tops out at 178. ata passes all 178. If you find a behavior difference not covered here, that is a bug in fastify-ata or ata: please open an issue.

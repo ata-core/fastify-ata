@@ -227,26 +227,43 @@ Works with Fastify v5's Standard Schema support, tRPC, TanStack Form, Drizzle OR
 
 All numbers below are reproducible on M4 Pro / Node 25 with the benchmarks in this repo and in `ata-validator/benchmark`. Run-to-run noise is roughly +/- 5% at these scales.
 
-### Fastify pipeline (autocannon, 10 connections, pipelining 10)
+### Fastify pipeline (`bench-realtime.js`, autocannon, 50 routes, 50 connections, 5s)
 
-| Payload | ajv (default) | ata | delta |
-|---|---|---|---|
-| valid (10 fields) | ~70,000 req/s | ~70,500 req/s | tied |
-| invalid (10 fields) | ~51,000 req/s | ~52,500 req/s | +3% |
-| invalid (abortEarly) | ~51,000 req/s | ~52,800 req/s | +3.5% |
+| | ajv (default) | ata |
+|---|---|---|
+| Requests/sec | 61,258 | 70,198 |
+| Latency, average | 0.06 ms | 0.05 ms |
+| Latency, p99 | 1.00 ms | 1.00 ms |
 
-HTTP + JSON.parse + routing dominate the pipeline, so validator choice is small on throughput. The real difference is elsewhere.
+HTTP, routing and `JSON.parse` dominate a request, so the validator moves throughput
+by about 15% here and no more. `profile-fastify.mjs` splits one request and finds
+`JSON.parse` at 92% of the cost against validation at 7%. Throughput is not the
+reason to switch; the numbers below are.
 
 ### Where ata-validator moves the needle
 
+Schema compilation at boot, from `bench-startup.js`. Each figure is the median of
+nine process-isolated runs with a no-route Fastify baseline subtracted, so what is
+left is the cost of compiling the route schemas and nothing else.
+
+| Routes | ajv | ata | delta |
+|---|---|---|---|
+| 50 | 41.6 ms | 1.4 ms | **30x faster** |
+| 100 | 70.0 ms | 4.2 ms | **17x faster** |
+| 250 | 142.7 ms | 11.4 ms | **13x faster** |
+| 500 | 263.0 ms | 18.8 ms | **14x faster** |
+| 1000 | 548.4 ms | 41.2 ms | **13x faster** |
+
+Total boot time, baseline included, is 83.6 ms against 583.9 ms at 1000 routes. Below
+about 20 routes the difference is under measurement noise and not worth quoting.
+
 | Scenario | ajv | ata | delta |
 |---|---|---|---|
-| **Serverless cold start** (10 routes, first request) | 12.4 ms | 0.5 ms | **24x faster** |
-| **Startup** (200 routes) | 7.0 ms | 2.4 ms | **2.9x faster** |
-| **Invalid validation** (with abortEarly) | ~15 ns/op | 3.7 ns/op | **4x faster** |
 | **ReDoS pattern** `^(a+)+$` | 765 ms | 0.3 ms | **immune (RE2)** |
 
-Serverless cold start is the scenario that matters for Vercel, Cloudflare Workers, Fly.io and similar platforms. On a long-running box the gap closes, so classic servers will not see a throughput jump.
+Boot cost is the scenario that matters for Vercel, Fly.io and similar platforms, where
+a process starts far more often than a long-running box does. On a box that stays up,
+the gap is paid once.
 
 ### Build-time compile (optional)
 
@@ -273,7 +290,7 @@ Generated file has zero runtime dependency on `ata-validator`. `isValid` is emit
 - **Multi-core** - `countValid(ndjsonBuf)` validates many messages in one native call
 - **Standard Schema V1** - native support, works with Fastify v5, tRPC, TanStack Form, Drizzle
 - **Draft 2020-12 and Draft 7** - every applicable draft 2020-12 case in the official JSON Schema Test Suite passes with the native engine installed (1190/1190); 99.8% pure JS
-- **Fastify's own suite** - 181 of 187 tests pass with ata as the default validator; the remaining six test the default validator's private extension API. See [compat/COMPATIBILITY.md](compat/COMPATIBILITY.md)
+- **Fastify's own suite** - 178 of 184 tests pass with ata as the default validator; the remaining six test the default validator's private extension API rather than validation behaviour. See [compat/COMPATIBILITY.md](compat/COMPATIBILITY.md)
 
 ## License
 
