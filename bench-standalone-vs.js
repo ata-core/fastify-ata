@@ -114,6 +114,23 @@ app.ready().then(() => {
 }
 
 // ============================================================
+// 0. ata plain: just register the plugin, no build step, no precompile
+// ============================================================
+function ataPlainScript(routes) {
+  return `
+'use strict'
+const start = performance.now()
+const fastify = require('fastify')()
+fastify.register(require(${JSON.stringify(path.resolve(__dirname, 'index.js'))}))
+const routes = ${JSON.stringify(routes)}
+routes.forEach(r => { fastify.post(r.url, { schema: { body: r.schema } }, (req, reply) => reply.send({ ok: true })) })
+fastify.ready().then(() => {
+  process.send({ ms: performance.now() - start })
+  process.exit()
+})
+`
+}
+
 // 3. ata compact standalone
 // ============================================================
 function ataStandaloneScript(routes, bundlePath) {
@@ -205,13 +222,21 @@ async function main() {
     const ataStandalone = times3[1]
     try { unlinkSync(bundlePath) } catch {}
 
-    console.log(`  ajv default:    ${ajvDefault.toFixed(0)}ms`)
-    console.log(`  ajv standalone: ${ajvStandalone >= 0 ? ajvStandalone.toFixed(0) + 'ms' : 'FAILED'}`)
-    console.log(`  ata compact:    ${ataStandalone.toFixed(0)}ms`)
+    // 0b. ata plain, no build step at all
+    const times0 = []
+    for (let r = 0; r < 3; r++) times0.push(await runScript(ataPlainScript(routes)))
+    times0.sort((a, b) => a - b)
+    const ataPlain = times0[1]
+
+    console.log(`  ajv default:       ${ajvDefault.toFixed(0)}ms`)
+    console.log(`  ajv standalone:    ${ajvStandalone >= 0 ? ajvStandalone.toFixed(0) + 'ms' : 'FAILED'}`)
+    console.log(`  ata plain:         ${ataPlain.toFixed(0)}ms   (no build step)`)
+    console.log(`  ata compact:       ${ataStandalone.toFixed(0)}ms   (precompiled bundle)`)
     if (ajvStandalone > 0) {
-      console.log(`  ata vs ajv standalone: ${(ajvStandalone / ataStandalone).toFixed(1)}x faster`)
+      console.log(`  ata plain vs ajv standalone:   ${(ajvStandalone / ataPlain).toFixed(1)}x faster`)
+      console.log(`  ata compact vs ajv standalone: ${(ajvStandalone / ataStandalone).toFixed(1)}x faster`)
     }
-    console.log(`  ata vs ajv default:    ${(ajvDefault / ataStandalone).toFixed(1)}x faster`)
+    console.log(`  ata plain vs ajv default:     ${(ajvDefault / ataPlain).toFixed(1)}x faster`)
     console.log()
   }
 }

@@ -257,6 +257,27 @@ left is the cost of compiling the route schemas and nothing else.
 Total boot time, baseline included, is 83.6 ms against 583.9 ms at 1000 routes. Below
 about 20 routes the difference is under measurement noise and not worth quoting.
 
+### Against the standalone build step (`bench-standalone-vs.js`)
+
+Fastify's documented route to the fastest startup is
+[`@fastify/ajv-compiler` in standalone mode](https://backend.cafe/how-to-unlock-the-fastest-fastify-server-startup):
+compile every route schema to a file at build time, load the files at boot. The
+table is process start to `app.ready()`, five schema types reused across routes,
+median of three runs.
+
+| Routes | ajv default | ajv standalone | ata, no build step | ata precompiled |
+|---|---|---|---|---|
+| 50 | 62 ms | 40 ms | 43 ms | 37 ms |
+| 100 | 77 ms | 45 ms | 47 ms | 40 ms |
+| 200 | 111 ms | 55 ms | 50 ms | 41 ms |
+| 500 | 182 ms | 81 ms | **59 ms** | 46 ms |
+
+Past about 200 routes, installing ata and doing nothing else boots faster than ajv
+with the build step in place: 59 ms against 81 ms at 500 routes. Precompiling with
+`fastify-ata/standalone` takes another 20% off, but it is an optimization rather
+than the thing that makes the difference. Under 100 routes the four are close
+enough that boot time should not decide anything.
+
 | Scenario | ajv | ata | delta |
 |---|---|---|---|
 | **ReDoS pattern** `^(a+)+$` | 765 ms | 0.3 ms | **immune (RE2)** |
