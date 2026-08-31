@@ -12,7 +12,7 @@ The preload swaps the single `require('@fastify/ajv-compiler')` inside Fastify's
 
 ## Current score
 
-**178 of 184 tests pass** (Fastify main at 5.8.5, ata-validator 1.7.2, fastify-ata 0.9.2).
+**178 of 184 tests pass** (Fastify main at dce0d47a, ata-validator 1.11.0, fastify-ata 0.9.4).
 
 Everything Fastify's suite asserts about validation behavior passes: type checks and coercion (including the `array` coercion mode), defaults, `removeAdditional`, required and enum handling, cross-schema `$ref` through `addSchema`, draft-07 `$id` anchors, `nullable`, `oneOf`/`anyOf` branching, custom error messages via `errorMessage`, `$merge`/`$patch` keywords, fail-fast startup errors for unresolvable references, encapsulation scoping, error shape (exact default error object layout, mutable for plugins like ajv-i18n), the error paths in `validation-error-handling`, and shared-schema `$ref` into `/definitions` across the validator AND the serializer (ata never mutates caller-provided schema objects, so fast-json-stringify sees them untouched).
 
