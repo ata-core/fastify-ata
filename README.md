@@ -312,13 +312,13 @@ For browser / edge deployments, ata ships an `ata compile` CLI that turns a JSON
 npx ata compile schemas/user.json -o src/user.validator.mjs --name User
 ```
 
-A 10-field schema produces:
+A 10-field schema produces, on ata-validator 1.25.0, whose emitted modules carry full error detail and a schema hash:
 
 | Variant | Raw | Gzipped |
 |---|---|---|
-| ata runtime bundle | 117 KB | 27 KB |
-| `ata compile` standard | 4.9 KB | **1.2 KB** |
-| `ata compile --abort-early` | 1.3 KB | **0.6 KB** |
+| ata runtime bundle | 325 KB | 87 KB |
+| `ata compile` standard | 32.1 KB | **4.8 KB** |
+| `ata compile --abort-early` | 7.5 KB | **2.5 KB** |
 
 Generated file has zero runtime dependency on `ata-validator`. `isValid` is emitted as a TypeScript type predicate, so consumers get narrowing out of the box.
 
