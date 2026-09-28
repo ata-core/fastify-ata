@@ -260,20 +260,22 @@ types and portability. Do not switch for requests per second.
 
 ### Where ata-validator moves the needle
 
-Schema compilation at boot, from `bench-startup.js`. Each figure is the median of
-nine process-isolated runs with a no-route Fastify baseline subtracted, so what is
-left is the cost of compiling the route schemas and nothing else.
+Schema compilation at boot, from `bench-startup.js`. Each run takes the median of
+nine process-isolated boots with a no-route Fastify baseline subtracted, so what is
+left is the cost of compiling the route schemas and nothing else; the table is the
+median of three such runs, on ata-validator 1.36.0 and Node 25.
 
 | Routes | ajv | ata | delta |
 |---|---|---|---|
-| 50 | 41.6 ms | 1.4 ms | **30x faster** |
-| 100 | 70.0 ms | 4.2 ms | **17x faster** |
-| 250 | 142.7 ms | 11.4 ms | **13x faster** |
-| 500 | 263.0 ms | 18.8 ms | **14x faster** |
-| 1000 | 548.4 ms | 41.2 ms | **13x faster** |
+| 50 | 45.8 ms | 2.7 ms | **17x faster** |
+| 100 | 83.0 ms | 4.0 ms | **21x faster** |
+| 250 | 149.6 ms | 8.0 ms | **19x faster** |
+| 500 | 267.0 ms | 14.7 ms | **18x faster** |
+| 1000 | 593.9 ms | 28.9 ms | **21x faster** |
 
-Total boot time, baseline included, is 83.6 ms against 583.9 ms at 1000 routes. Below
-about 20 routes the difference is under measurement noise and not worth quoting.
+Total boot time, baseline included, is 69.7 ms against 627.3 ms at 1000 routes. Under
+about 250 routes ata's share is a few milliseconds and moves by as much between runs
+as the baseline does, so read the 50 and 100 rows as small rather than exact.
 
 ### Against the standalone build step (`bench-standalone-vs.js`)
 
@@ -285,15 +287,15 @@ median of three runs.
 
 | Routes | ajv default | ajv standalone | ata, no build step | ata precompiled |
 |---|---|---|---|---|
-| 50 | 62 ms | 40 ms | 43 ms | 37 ms |
-| 100 | 77 ms | 45 ms | 47 ms | 40 ms |
-| 200 | 111 ms | 55 ms | 50 ms | 41 ms |
-| 500 | 182 ms | 81 ms | **59 ms** | 46 ms |
+| 50 | 71 ms | 41 ms | 46 ms | 38 ms |
+| 100 | 84 ms | 46 ms | 45 ms | 39 ms |
+| 200 | 110 ms | 55 ms | 46 ms | 44 ms |
+| 500 | 191 ms | 84 ms | **54 ms** | 48 ms |
 
-Past about 200 routes, installing ata and doing nothing else boots faster than ajv
-with the build step in place: 59 ms against 81 ms at 500 routes. Precompiling with
-`fastify-ata/standalone` takes another 20% off, but it is an optimization rather
-than the thing that makes the difference. Under 100 routes the four are close
+From about 200 routes, installing ata and doing nothing else boots faster than ajv
+with the build step in place: 54 ms against 84 ms at 500 routes, on ata-validator
+1.36.0. Precompiling with `fastify-ata/standalone` takes another 11% off, but it is
+an optimization rather than the thing that makes the difference. Under 100 routes the four are close
 enough that boot time should not decide anything.
 
 | Scenario | ajv | ata | delta |
@@ -312,13 +314,14 @@ For browser / edge deployments, ata ships an `ata compile` CLI that turns a JSON
 npx ata compile schemas/user.json -o src/user.validator.mjs --name User
 ```
 
-A 10-field schema produces, on ata-validator 1.25.0, whose emitted modules carry full error detail and a schema hash:
+The 10-field schema in ata-validator's `tests/fixtures/error-dx/user.schema.json` produces, on ata-validator 1.36.0, with full error detail and a schema hash:
 
 | Variant | Raw | Gzipped |
 |---|---|---|
-| ata runtime bundle | 325 KB | 87 KB |
-| `ata compile` standard | 32.1 KB | **4.8 KB** |
-| `ata compile --abort-early` | 7.5 KB | **2.5 KB** |
+| ata runtime bundle (`bun build --minify --target=browser`) | 354.6 KB | 95.6 KB |
+| `ata compile` (development default, with the schema source map) | 9.2 KB | **2.6 KB** |
+| `ata compile --no-source` (production default) | 7.7 KB | **2.3 KB** |
+| `ata compile --abort-early` | 4.5 KB | **1.8 KB** |
 
 Generated file has zero runtime dependency on `ata-validator`. `isValid` is emitted as a TypeScript type predicate, so consumers get narrowing out of the box.
 
@@ -328,7 +331,7 @@ Generated file has zero runtime dependency on `ata-validator`. `isValid` is emit
 - **simdjson** - SIMD-accelerated JSON parsing for buffer-input paths
 - **Multi-core** - `countValid(ndjsonBuf)` validates many messages in one native call
 - **Standard Schema V1** - native support, works with Fastify v5, tRPC, TanStack Form, Drizzle
-- **Draft 2020-12 and Draft 7** - every applicable draft 2020-12 case in the official JSON Schema Test Suite passes with the native engine installed (1190/1190); 99.8% pure JS
+- **Draft 2020-12 and Draft 7** - the full official JSON Schema Test Suite passes on ata-validator 1.36.0: 1301 of 1301 for draft 2020-12 and 929 of 929 for draft 7, in pure JS and again with code generation blocked
 - **Fastify's own suite** - 178 of 184 tests pass with ata as the default validator; the remaining six test the default validator's private extension API rather than validation behaviour. See [compat/COMPATIBILITY.md](compat/COMPATIBILITY.md)
 
 ## License

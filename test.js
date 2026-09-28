@@ -236,15 +236,30 @@ async function run() {
   await app9.register(fastifyAta)
   app9.post('/items', {
     schema: { body: { type: 'object', properties: { tags: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['tags'] } },
-  }, (req, reply) => reply.send({ ok: true }))
+  }, (req, reply) => reply.send({ ok: true, body: req.body }))
   await app9.ready()
   const ri1 = await app9.inject({ method: 'POST', url: '/items', payload: { tags: ['a', 'b'] } })
   const ri2 = await app9.inject({ method: 'POST', url: '/items', payload: { tags: [] } })
   const ri3 = await app9.inject({ method: 'POST', url: '/items', payload: { tags: ['a', 123] } })
   assert(ri1.statusCode === 200, 'array items: valid accepted')
   assert(ri2.statusCode === 400, `array items: empty rejected (got ${ri2.statusCode})`)
-  assert(ri3.statusCode === 400, `array items: wrong type rejected (got ${ri3.statusCode})`)
+  // Fastify's default validator coerces array items too: a number in a string
+  // array becomes a string and the request is accepted. ata-validator 1.36.0
+  // coerces below the top level as well; before it, this was rejected.
+  assert(ri3.statusCode === 200, `array items: number coerced to string, as Fastify does (got ${ri3.statusCode})`)
+  assert(JSON.stringify(JSON.parse(ri3.payload).body.tags) === '["a","123"]', 'array items: coerced value reaches the handler')
   await app9.close()
+
+  // 15b. Without coercion the wrong item type is rejected.
+  const app9b = fastify()
+  await app9b.register(fastifyAta, { coerceTypes: false })
+  app9b.post('/items', {
+    schema: { body: { type: 'object', properties: { tags: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['tags'] } },
+  }, (req, reply) => reply.send({ ok: true }))
+  await app9b.ready()
+  const ri4 = await app9b.inject({ method: 'POST', url: '/items', payload: { tags: ['a', 123] } })
+  assert(ri4.statusCode === 400, `array items: wrong type rejected with coerceTypes: false (got ${ri4.statusCode})`)
+  await app9b.close()
 
   // 16. allOf composition
   const app10 = fastify()
