@@ -199,6 +199,27 @@ const app = fastify({
 })
 ```
 
+## OpenAPI documents with @fastify/swagger
+
+Nothing to add. `@fastify/swagger` reads the JSON Schema on each route and writes it into the document as it is, and fastify-ata validates with the same schema, so one definition serves both:
+
+```js
+await fastify.register(require('@fastify/swagger'), { openapi: { info: { title: 'users', version: '1' } } })
+await fastify.register(require('fastify-ata'))
+
+fastify.post('/users', {
+  schema: {
+    description: 'Create a user',
+    body: { type: 'object', required: ['name'], properties: { name: { type: 'string', minLength: 1, description: 'Display name' } } },
+    response: { 201: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } } }
+  }
+}, async (req, reply) => reply.code(201).send({ id: '...' }))
+
+fastify.swagger() // the request body and the 201 response carry the schemas above, description and format included
+```
+
+Checked with fastify 5.12, @fastify/swagger 9.9 and fastify-ata 0.9.6: an invalid body is refused by ata with Fastify's usual 400, and the generated document is the route schema verbatim.
+
 ## Standard Schema V1
 
 ata-validator natively implements [Standard Schema V1](https://github.com/standard-schema/standard-schema) - the emerging standard for TypeScript-first schema libraries.
