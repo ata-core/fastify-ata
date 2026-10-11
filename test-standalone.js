@@ -24,7 +24,8 @@ function run() {
 
   assert(validate({ name: 'x', age: 1 }) === true, 'standalone: valid input accepted')
 
-  const ok = validate({ age: 5 })
+  // `nam`, a typo of the required key, so the error carries a hint.
+  const ok = validate({ nam: 'x', age: 5 })
   assert(ok === false, 'standalone: invalid input rejected')
 
   const e = validate.errors[0]

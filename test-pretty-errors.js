@@ -31,7 +31,9 @@ async function run() {
   app.post('/u', { schema }, (req, reply) => reply.send({ ok: true }))
   await app.ready()
 
-  const r = await app.inject({ method: 'POST', url: '/u', payload: { age: 5 } })
+  // A typo of the required key: since ata 1.44.0 a hint is offered only for a
+  // key near the missing name, so `age` alone no longer gets one for `name`.
+  const r = await app.inject({ method: 'POST', url: '/u', payload: { nam: 'Ada', age: 5 } })
   assert(r.statusCode === 400, `prettyErrors: invalid returns 400 (got ${r.statusCode})`)
   const msg = JSON.parse(r.payload).message
   assert(/ATA\d{4}/.test(msg), `prettyErrors: message carries error code (got "${msg}")`)
