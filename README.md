@@ -167,6 +167,36 @@ const app = Fastify({
 
 Note on memory: this replaces the ajv *validator*, so it is never instantiated. The `ajv` module itself can still be pulled into the process by Fastify's serializer (`fast-json-stringify` uses it to check serialization schemas), independent of which validator you choose. Replacing the validator removes ajv from the request validation path, not necessarily from the module graph.
 
+## Precompiled routes, one line
+
+```js
+const fastify = require('fastify')
+const fastifyAta = require('fastify-ata')
+
+const app = fastify({ schemaController: fastifyAta.precompiled({ dir: './.ata' }) })
+```
+
+Each route schema gets a file under `dir`, named by a hash of the schema, the
+validator options and the ata-validator version that wrote it. The first start
+compiles a route and writes its file; the next start reads the file and compiles
+nothing, and the validators go through no `new Function`, which is what a run
+under `node --disallow-code-generation-from-strings` or a build with Bun's
+ahead-of-time compiler needs. The files are written with the plugin's options
+(`coerceTypes: 'array'`, `removeAdditional: true`, as Fastify's own validator),
+and the data goes through the same pass before the check, so `/users/:id` reads
+the same integer either way. `mode: 'write'` compiles every route (a build step),
+`mode: 'read'` never compiles and fails loudly on a missing file (production);
+`ATA_PRECOMPILE=write` or `read` in the environment does the same. Commit the
+directory or write it in CI; a changed schema or option gets a new file name,
+so a stale file is never read. Fastify's router and its response serializer
+(fast-json-stringify) still generate their code at startup; this covers the
+validators.
+
+Measured on Node 25 and Bun 1.4.0, 10 routes, from process start to the first
+validated request (medians of 15 interleaved runs): Fastify's default ajv
+pipeline 53.4 and 56.5 ms, fastify-ata compiling at the first request 54.0 and
+53.0 ms, fastify-ata precompiled 47.6 and 46.4 ms.
+
 ## Standalone Mode (Pre-compiled)
 
 Drop-in replacement for `@fastify/ajv-compiler/standalone`. Same API.

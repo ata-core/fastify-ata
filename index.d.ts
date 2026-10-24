@@ -33,5 +33,26 @@ declare namespace fastifyAta {
   }
 }
 
-declare const fastifyAta: FastifyPluginCallback<FastifyAtaOptions>
+interface PrecompiledOptions {
+  /** Where the compiled validators are written and read. Default `.ata`. */
+  dir?: string
+  /** `'auto'` reads what is there and writes what is not; `'write'` compiles every route; `'read'` never compiles. ATA_PRECOMPILE in the environment sets it too. */
+  mode?: 'auto' | 'read' | 'write'
+  coerceTypes?: boolean | 'array'
+  removeAdditional?: boolean
+  abortEarly?: boolean
+}
+
+interface Precompiled {
+  compilersFactory: { buildValidator: (externalSchemas?: Record<string, unknown>) => (routeSchema: { schema: unknown }) => ((data: unknown) => boolean | { value: unknown }) & { errors: unknown[] | null } }
+  /** How many route validators were read from a file, written, and compiled by the runtime in this process. */
+  stats: { read: number, written: number, compiled: number }
+  dir: string
+  mode: 'auto' | 'read' | 'write'
+}
+
+declare const fastifyAta: FastifyPluginCallback<FastifyAtaOptions> & {
+  /** Route validators compiled ahead of time: `fastify({ schemaController: fastifyAta.precompiled({ dir: './.ata' }) })`. */
+  precompiled: (options?: PrecompiledOptions) => Precompiled
+}
 export = fastifyAta

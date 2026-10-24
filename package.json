@@ -5,7 +5,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "node test.js && node test-pretty-errors.js && node test-standalone.js && node test-compiler.js && node test-type-provider.js && node test-t-builder.js && tsc -p tsconfig.types.json"
+    "test": "node test.js && node test-pretty-errors.js && node test-standalone.js && node test-precompiled.js && node test-compiler.js && node test-type-provider.js && node test-t-builder.js && tsc -p tsconfig.types.json"
   },
   "repository": {
     "type": "git",

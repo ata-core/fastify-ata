@@ -64,3 +64,5 @@ module.exports = fp(fastifyAta, {
   fastify: '>=4.0.0',
   name: 'fastify-ata',
 })
+// Route validators compiled ahead of time, as a schemaController (precompiled.js).
+module.exports.precompiled = require('./precompiled')
