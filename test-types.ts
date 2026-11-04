@@ -85,3 +85,11 @@ app.post('/merged', {
   void _exact
   return { ok: true }
 })
+
+// fastify-ata/stream: the record route's config is typed on the route itself
+import fastifyAtaStream = require('./stream')
+const streamApp = Fastify()
+streamApp.register(fastifyAtaStream, { contentTypes: ['application/x-ndjson'] })
+streamApp.post('/import', { config: { records: { type: 'object', required: ['id'] }, collect: false, format: 'ndjson' } }, async () => ({}))
+// @ts-expect-error: format is one of three names
+streamApp.post('/bad', { config: { records: { type: 'object' }, format: 'csv' } }, async () => ({}))

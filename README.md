@@ -229,6 +229,37 @@ const app = fastify({
 })
 ```
 
+## Record bodies, validated as they arrive
+
+A bulk endpoint takes thousands of records in one body. Fastify's stock parser reads the whole body into memory, parses it, and only then validates, so a bad record on line 50 of a 100 MB upload is reported after the last byte, with the whole body held in the process. `fastify-ata/stream` validates each record the moment it is complete and answers at the first one that fails.
+
+```js
+const fastifyAtaStream = require('fastify-ata/stream')
+
+await app.register(fastifyAtaStream)
+
+app.post('/import', {
+  config: { records: { type: 'object', properties: { id: { type: 'integer' } }, required: ['id'] } },
+}, async (req) => {
+  // req.body is the array of records, every one already validated
+  return { imported: req.body.length }
+})
+```
+
+A route that sets `config.records` takes its body as one JSON document per line (`application/x-ndjson`) or as a JSON array (`application/json`); the first non-blank character decides, or `config.format` fixes it. The first record that fails answers 400 with its index from zero, the path inside it and the errors `validate()` gives, under the code `FST_ERR_ATA_STREAM_RECORD`; a record that is not JSON answers under `FST_ERR_ATA_STREAM_PARSE`. The rest of the body is not read: the reply carries `Connection: close` and the connection is closed once it is sent. The route's `bodyLimit` holds, as 413. Routes without `config.records` keep the stock JSON parser, with its empty-body, prototype-key and broken-JSON behaviour.
+
+With `config: { records, collect: false }` the handler receives only `{ records: count }`, for a body that must never be held in memory at once; pair it with a database write per record in a later version, or use `ata-validator/stream` directly.
+
+Measured on a 100 MB body of 1.3 million records sent over a real socket, Node 25, M4 (`bench-stream.js`):
+
+| route | bad record at index 50 | all records valid |
+|---|---|---|
+| stock parser, `schema.body` array | 400 after 564 ms, 100 MB read, +569 MB RSS | 200 in 545 ms, +557 MB RSS |
+| `config.records` | 400 after 11 ms, 1.8 MB read, +2 MB RSS | 200 in 464 ms, +332 MB RSS |
+| `config.records`, `collect: false` | 400 after 10 ms, 1.8 MB read, +3 MB RSS | 200 in 411 ms, +31 MB RSS |
+
+The valid case collecting records still holds the parsed array, which is where the 332 MB goes; the count-only route holds nothing. Not covered: multipart bodies, and a record schema that needs the whole set (uniqueness across records) is not a record schema.
+
 ## OpenAPI documents with @fastify/swagger
 
 Nothing to add. `@fastify/swagger` reads the JSON Schema on each route and writes it into the document as it is, and fastify-ata validates with the same schema, so one definition serves both:
