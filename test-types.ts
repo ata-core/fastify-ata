@@ -93,3 +93,9 @@ streamApp.register(fastifyAtaStream, { contentTypes: ['application/x-ndjson'] })
 streamApp.post('/import', { config: { records: { type: 'object', required: ['id'] }, collect: false, format: 'ndjson' } }, async () => ({}))
 // @ts-expect-error: format is one of three names
 streamApp.post('/bad', { config: { records: { type: 'object' }, format: 'csv' } }, async () => ({}))
+
+// fastify-ata/plans: named schemas, the decorator on the instance
+import fastifyAtaPlans = require('./plans')
+const plansApp = Fastify()
+plansApp.register(fastifyAtaPlans, { plans: { signup: { type: 'object', required: ['email'] } }, prefix: '/forms', richErrors: false })
+plansApp.ready().then(() => { const p: object | null = plansApp.ataPlan('signup'); void p })

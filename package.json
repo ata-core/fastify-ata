@@ -1,11 +1,11 @@
 {
   "name": "fastify-ata",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Fastify plugin for ata-validator: the same validation behavior as Fastify's default, with route schemas compiled 17 to 21 times faster at boot.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "node test.js && node test-pretty-errors.js && node test-standalone.js && node test-precompiled.js && node test-stream.js && node test-compiler.js && node test-type-provider.js && node test-t-builder.js && tsc -p tsconfig.types.json"
+    "test": "node test.js && node test-pretty-errors.js && node test-standalone.js && node test-precompiled.js && node test-stream.js && node test-plans.js && node test-compiler.js && node test-type-provider.js && node test-t-builder.js && tsc -p tsconfig.types.json"
   },
   "repository": {
     "type": "git",
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/ata-core/fastify-ata#readme",
   "dependencies": {
-    "ata-validator": "^1.62.0",
+    "ata-validator": "^1.63.1",
     "fastify-plugin": "^6.0.1",
     "sanitize-filename": "^1.6.4"
   },

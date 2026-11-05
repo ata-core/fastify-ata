@@ -260,6 +260,31 @@ Measured on a 100 MB body of 1.3 million records sent over a real socket, Node 2
 
 The valid case collecting records still holds the parsed array, which is where the 332 MB goes; the count-only route holds nothing. Not covered: multipart bodies, and a record schema that needs the whole set (uniqueness across records) is not a record schema.
 
+## Plans for the page
+
+A form the server defines and the page validates as the user types does not need the runtime compiler in the page. `fastify-ata/plans` serves each schema as a plan, written once at startup with `tablePlan` from `ata-validator/ir`; the page reads it with `fromPlan` from `ata-validator/plan` and validates with the same verdicts, errors and filled defaults as `new Validator(schema)` on this server.
+
+```js
+const fastifyAtaPlans = require('fastify-ata/plans')
+
+await app.register(fastifyAtaPlans, { plans: { signup: signupSchema, order: orderSchema } })
+// GET /plans/signup  ->  the plan, application/json, with an ETag and max-age=300
+```
+
+```js
+// the page
+import { fromPlan } from 'ata-validator/plan'
+
+const signup = await fromPlan(await (await fetch('/plans/signup')).json())
+const result = signup.validate(formData) // { valid, errors } as on the server
+```
+
+The page carries the plan reader, 6.2 KB gzipped on ata-validator 1.63.1 (the entry needs 1.63.0 or later), and the format checks and error order only when a plan names them; the runtime entry with the compiler is 56 KB. `fastify.ataPlan(name)` gives a plan to a handler that wants to embed it in a page. Options: `prefix` (default `/plans`), `richErrors` (default false; a rich plan is read with `ata-validator/plan-rich`), `assertFormat` and `useDefaults` (default true, as the page's validator), `maxAge`.
+
+A schema a plan cannot carry fails registration with its name rather than serving something that answers differently: a `$ref` to another document, the unevaluated keywords, dynamic references, custom keywords or formats. On ata-validator up to 1.63.1 that list also holds `anyOf`, `oneOf`, `patternProperties`, `propertyNames`, `contains`, `dependentSchemas` and a default under `additionalProperties`; the next ata-validator release carries them, and the plans then cover 844 of SchemaStore's 990 schemas. Serve such a schema itself and validate it with `new Validator` on the page.
+
+The page and the server agree on every document only on the same ata-validator version; the plan records the version that wrote it, and `fromPlan` says so once when another reads it.
+
 ## OpenAPI documents with @fastify/swagger
 
 Nothing to add. `@fastify/swagger` reads the JSON Schema on each route and writes it into the document as it is, and fastify-ata validates with the same schema, so one definition serves both:
