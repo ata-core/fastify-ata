@@ -37,12 +37,12 @@ async function fastifyAtaPlans(fastify, opts) {
 
   fastify.decorate('ataPlan', (name) => { const p = served.get(name); return p === undefined ? null : p.plan })
 
-  fastify.get(prefix + '/:name', { config: { ataPlans: true } }, (request, reply) => {
+  fastify.get(prefix + '/:name', (request, reply) => {
     const p = served.get(request.params.name)
     if (p === undefined) { reply.code(404); return { statusCode: 404, error: 'Not Found', message: `no plan named "${request.params.name}"` } }
     reply.header('etag', p.etag)
     reply.header('cache-control', `public, max-age=${maxAge}`)
-    if (request.headers['if-none-match'] === p.etag) { reply.code(304); return null }
+    if (request.headers['if-none-match'] === p.etag) { reply.code(304).send(); return reply }
     reply.type('application/json; charset=utf-8')
     return p.text
   })
