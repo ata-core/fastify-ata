@@ -4,7 +4,7 @@
 
 # fastify-ata
 
-Fastify plugin for [ata-validator](https://ata-validator.com) - JSON Schema validation powered by simdjson.
+Fastify plugin for [ata-validator](https://ata-validator.com). JSON Schema validation by ata-validator, pure JavaScript by default.
 
 Drop-in replacement for Fastify's default ajv validator. Standard Schema V1 compatible.
 
@@ -328,6 +328,8 @@ Works with Fastify v5's Standard Schema support, tRPC, TanStack Form, Drizzle OR
 - Applies `default` values, `coerceTypes`, `removeAdditional` during validation
 - Caches compiled schemas (WeakMap) for reuse across routes
 - Returns Fastify-compatible validation errors on invalid requests (400)
+- `fastify-ata/stream` validates a JSON array or NDJSON body record by record as it arrives and ends the request at the first invalid record
+- `fastify-ata/plans` serves a schema as a plan at `GET /plans/<name>`, which the page validates with through `ata-validator/plan`, no compiler on the page
 - Works with Fastify v4 and v5
 
 ## Performance
@@ -438,7 +440,7 @@ Generated file has zero runtime dependency on `ata-validator`. `isValid` is emit
 - **simdjson** - SIMD-accelerated JSON parsing for buffer-input paths
 - **Multi-core** - `countValid(ndjsonBuf)` validates many messages in one native call
 - **Standard Schema V1** - native support, works with Fastify v5, tRPC, TanStack Form, Drizzle
-- **Draft 2020-12 and Draft 7** - the full official JSON Schema Test Suite passes on ata-validator 1.36.0: 1301 of 1301 for draft 2020-12 and 929 of 929 for draft 7, in pure JS and again with code generation blocked
+- **Six dialects** - the full official JSON Schema Test Suite passes on ata-validator 1.63.1: 1302 of 1302 for draft 2020-12, 1261 of 1261 for 2019-09, 929 of 929 for draft 7, 841 of 841 for draft-06, 618 of 618 for draft-04 and 1135 of 1135 for the v1 dialect, in pure JS and again with code generation blocked
 - **Fastify's own suite** - 178 of 184 tests pass with ata as the default validator; the remaining six test the default validator's private extension API rather than validation behaviour. See [compat/COMPATIBILITY.md](compat/COMPATIBILITY.md)
 
 ## License

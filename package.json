@@ -1,7 +1,7 @@
 {
   "name": "fastify-ata",
   "version": "0.12.0",
-  "description": "Fastify plugin for ata-validator: the same validation behavior as Fastify's default, with route schemas compiled 17 to 21 times faster at boot.",
+  "description": "Fastify plugin for ata-validator: the same validation behavior as Fastify's default, route schemas compiled 17 to 21 times faster at boot, a stream parser that validates a bulk body record by record, and plans the page validates with.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
